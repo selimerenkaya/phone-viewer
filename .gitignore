@@ -1,0 +1,27 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+
+# Android / Gradle
+.gradle/
+build/
+local.properties
+*.keystore
+*.jks
+captures/
+
+# Node / Electron
+node_modules/
+dist/
+out/
+
+# Secrets and pairing material
+*.pem
+*.p12
+.env
+
+# Agent worktrees (see docs/AGENTS.md)
+.worktrees/
