@@ -36,7 +36,7 @@ The contract is the `Feature` interface plus a `Send` function. Both are lead-ow
 
 Lanes fill in the body and keep the signature. `desktop/src/feature.test.ts` fails if a lane breaks the shape.
 
-On the desktop, the whole app runs in the window's preload script (`desktop/src/renderer/app.ts`), so every lane can use both Node (`tls`, Electron `clipboard`) and the DOM (`VideoDecoder`, canvas, `Notification`). There is no IPC.
+On the desktop, the whole app runs in the window's preload script (`desktop/src/renderer/app.ts`), so every lane can use both Node (`tls`) and the DOM (`VideoDecoder`, canvas, `Notification`). The one exception is the clipboard: Electron 45 exposes `clipboard` only in the main process, so `desktop/src/main.ts` has two `ipcMain.handle` lines for it. Add IPC only for APIs that exist only in the main process.
 
 The `link` lane routes each incoming frame to the feature that owns its type range (see PROTOCOL.md). Lanes talk to each other **only** through the protocol. They never import each other's code.
 

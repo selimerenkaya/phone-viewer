@@ -41,12 +41,17 @@ Every message is one frame:
 | 0x20 | `TOUCH` | PC → phone | JSON `{ "action": "down"\|"move"\|"up", "x": 0.0-1.0, "y": 0.0-1.0 }` (x, y are fractions of the screen) | control |
 | 0x21 | `GLOBAL` | PC → phone | JSON `{ "action": "back"\|"home"\|"recents"\|"notifications"\|"power_dialog" }` | control |
 | 0x22 | `TEXT` | PC → phone | JSON `{ "text": "hello" }` (inserted into the focused field) | control |
-| 0x23 | `SCROLL` | PC → phone | JSON `{ "x": 0.5, "y": 0.5, "dy": -1.0 }` (dy in screen fractions) | control |
+| 0x23 | `SCROLL` | PC → phone | JSON `{ "x": 0.5, "y": 0.5, "dy": -1.0 }` (dy = finger travel in screen fractions, -1..1; wheel down → negative dy) | control |
+| 0x24 | `KEY` | PC → phone | JSON `{ "key": "backspace"\|"enter" }` (acts on the focused field) | control |
 | 0x30 | `NOTIFICATION` | phone → PC | JSON `{ "id": "key", "app": "WhatsApp", "title": "…", "text": "…", "posted": 1730830000000 }` | notify |
 | 0x31 | `NOTIFICATION_REMOVED` | phone → PC | JSON `{ "id": "key" }` | notify |
 | 0x32 | `CLIPBOARD` | both | JSON `{ "text": "…" }` | notify |
 
 Ranges: `0x01–0x0F` link, `0x10–0x1F` video, `0x20–0x2F` control, `0x30–0x3F` notify. A lane adds new types only inside its own range, and only after the lead updates this table.
+
+## Discovery
+
+The phone advertises the DNS-SD service `_phoneviewer._tcp` on port 27183, with the phone name as the instance name and no TXT records. Discovery only finds addresses; trust still comes only from the pinned fingerprint.
 
 ## Video rules
 
