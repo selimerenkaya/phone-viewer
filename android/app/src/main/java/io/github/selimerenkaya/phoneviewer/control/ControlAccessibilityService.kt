@@ -13,6 +13,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.view.Display
+import android.view.inputmethod.EditorInfo
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
@@ -86,8 +87,17 @@ class ControlAccessibilityService : AccessibilityService() {
         val node = focusedField() ?: return@post
         when (k) {
             "backspace" -> edit(node, "", backspace = true)
-            "enter" -> if (Build.VERSION.SDK_INT >= 30) node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id)
-                       else edit(node, "\n", backspace = false) // Android 10 has no IME-enter action
+            "enter" -> {
+                // Do what the keyboard's action button does: run the field's editor action (Search, Go, Send…).
+                // Many apps (e.g. browsers' search boxes) accept IME_ENTER but ignore it, so that's only the fallback.
+                val ime = if (Build.VERSION.SDK_INT >= 33) inputMethod else null
+                val action = (ime?.currentInputEditorInfo?.imeOptions ?: 0) and EditorInfo.IME_MASK_ACTION
+                when {
+                    ime?.currentInputConnection != null && action > EditorInfo.IME_ACTION_NONE -> ime.currentInputConnection!!.performEditorAction(action)
+                    Build.VERSION.SDK_INT >= 30 && node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id) -> {}
+                    else -> edit(node, "\n", backspace = false) // multi-line fields, or nothing better available
+                }
+            }
         }
     }
 
