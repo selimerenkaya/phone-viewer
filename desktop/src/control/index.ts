@@ -21,8 +21,9 @@ export function toFraction(clientX: number, clientY: number, box: Rect, videoW: 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 const json = (o: object) => new TextEncoder().encode(JSON.stringify(o));
 
-export function createControlFeature(send: Send): Feature {
-  let down = false;
+export function createControlFeature(sendRaw: Send): Feature {
+  let down = false, connected = false;
+  const send: Send = (t, p) => { if (connected) sendRaw(t, p); }; // input before the session starts is dropped
   const canvas = typeof document === "undefined" ? null : document.getElementById("screen") as HTMLCanvasElement | null;
   if (canvas) attach(canvas);
 
@@ -80,7 +81,8 @@ export function createControlFeature(send: Send): Feature {
   }
 
   return {
+    onConnected() { connected = true; },
     onMessage() {}, // control is PC → phone only
-    onDisconnected() { down = false; },
+    onDisconnected() { connected = false; down = false; },
   };
 }

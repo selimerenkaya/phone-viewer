@@ -7,6 +7,7 @@ import { createNotifyFeature } from "./notify";
 test("every lane exposes the Feature contract", () => {
   for (const create of [createVideoFeature, createControlFeature, createNotifyFeature]) {
     const f = create(() => {});
+    assert.equal(typeof f.onConnected, "function");
     assert.equal(typeof f.onMessage, "function");
     assert.equal(typeof f.onDisconnected, "function");
   }
