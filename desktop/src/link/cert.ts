@@ -28,6 +28,6 @@ export function makeCert(name: string): { key: string; cert: string } {
   );
   const sig = sign("sha256", tbs, privateKey);
   const cert = der(0x30, tbs, ecdsaSha256, der(0x03, Buffer.from([0]), sig));
-  const pem = `-----BEGIN CERTIFICATE-----\n${cert.toString("base64").replace(/.{64}/g, "$&\n")}\n-----END CERTIFICATE-----\n`;
+  const pem = `-----BEGIN CERTIFICATE-----\n${cert.toString("base64").match(/.{1,64}/g)!.join("\n")}\n-----END CERTIFICATE-----\n`;
   return { key: privateKey.export({ type: "pkcs8", format: "pem" }) as string, cert: pem };
 }

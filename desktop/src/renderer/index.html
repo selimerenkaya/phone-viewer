@@ -7,10 +7,12 @@
     <style>
       body { margin: 0; background: #111; color: #ddd; font: 14px system-ui, sans-serif; }
       #status { padding: 8px 12px; }
+      #link { padding: 8px 12px 0; }
       #screen { display: block; max-width: 100%; max-height: calc(100vh - 40px); margin: 0 auto; }
     </style>
   </head>
   <body>
+    <div id="link"><input id="ip" placeholder="Phone IP, e.g. 192.168.1.20" /> <button id="connect">Connect</button></div>
     <div id="status">Not connected</div>
     <canvas id="screen"></canvas>
   </body>
