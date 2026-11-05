@@ -29,8 +29,9 @@ class MainActivity : Activity() {
         // notify: opens Notification access settings
         addContentView(Button(this).apply {
             text = "Notification access"
+            isAllCaps = false // all-caps turns "i" into "İ" in Turkish
             setOnClickListener { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
-        }, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL))
+        }, FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.CENTER)) // centered: edge-to-edge puts the bottom under the nav bar
     }
 
     // notify: Android 10+ lets only the focused app read the clipboard
