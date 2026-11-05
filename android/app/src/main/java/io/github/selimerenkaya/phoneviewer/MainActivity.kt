@@ -19,6 +19,14 @@ class MainActivity : Activity() {
             textSize = 20f
             setPadding(48, 96, 48, 48)
         })
+        // control: remote input needs the accessibility service
+        if (io.github.selimerenkaya.phoneviewer.control.ControlAccessibilityService.instance == null) addContentView(
+            android.widget.Button(this).apply {
+                text = getString(R.string.enable_remote_control)
+                setOnClickListener { startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+            },
+            android.widget.FrameLayout.LayoutParams(-2, -2, android.view.Gravity.CENTER),
+        )
         startForegroundService(Intent(this, LinkService::class.java)) // link: listen for the PC
         addContentView(LinkPanel(this), ViewGroup.LayoutParams(MATCH_PARENT, WRAP_CONTENT)) // link: IP, status, pairing
     }
