@@ -9,6 +9,7 @@ Thumbs.db
 .gradle/
 build/
 local.properties
+keystore.properties
 *.keystore
 *.jks
 captures/
