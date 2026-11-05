@@ -1,4 +1,4 @@
-import { clipboard } from "electron";
+import { ipcRenderer } from "electron";
 import type { Feature, Send } from "../feature";
 import { EchoGuard } from "./echo";
 
@@ -15,13 +15,13 @@ export function createNotifyFeature(send: Send): Feature {
   let polling: NodeJS.Timeout | undefined;
   // One queue for clipboard reads and writes, so a poll never sees the value from before a write.
   let queue = Promise.resolve();
-  const enqueue = (job: () => Promise<void>) => (queue = queue.then(job).catch(() => {}));
+  const enqueue = (job: () => Promise<void>) => (queue = queue.then(job).catch((e) => console.error("notify: clipboard", e)));
 
   return {
     onConnected() {
       let primed = false;
       polling = setInterval(() => enqueue(async () => {
-        const text = await clipboard.readText();
+        const text = await ipcRenderer.invoke("notify:clipboard-read");
         if (!primed) {
           primed = true;
           echo.received(text); // only send changes made after connecting
@@ -41,7 +41,7 @@ export function createNotifyFeature(send: Send): Feature {
         const text: string = msg.text;
         enqueue(async () => {
           echo.received(text);
-          await clipboard.writeText(text);
+          await ipcRenderer.invoke("notify:clipboard-write", text);
         });
       } else if (type === NOTIFICATION && typeof msg.id === "string") {
         toasts.get(msg.id)?.close();
