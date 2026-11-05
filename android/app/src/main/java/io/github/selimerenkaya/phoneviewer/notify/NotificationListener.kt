@@ -18,13 +18,13 @@ class NotificationListener : NotificationListenerService() {
             .put("title", extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: "")
             .put("text", extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: "")
             .put("posted", sbn.postTime)
-        feature.send(NOTIFICATION, json.toString().toByteArray())
+        feature.post(NOTIFICATION, json.toString().toByteArray())
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
         val feature = NotifyFeature.current ?: return
         if (!shouldForward(sbn.notification.flags, sbn.packageName, packageName)) return
-        feature.send(NOTIFICATION_REMOVED, JSONObject().put("id", sbn.key).toString().toByteArray())
+        feature.post(NOTIFICATION_REMOVED, JSONObject().put("id", sbn.key).toString().toByteArray())
     }
 
     private fun appLabel(pkg: String): String = try {

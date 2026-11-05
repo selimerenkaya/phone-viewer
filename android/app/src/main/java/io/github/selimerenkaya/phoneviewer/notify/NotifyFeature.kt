@@ -9,14 +9,19 @@ import android.os.Looper
 import io.github.selimerenkaya.phoneviewer.Feature
 import io.github.selimerenkaya.phoneviewer.Send
 import org.json.JSONObject
+import java.util.concurrent.Executors
 
 const val NOTIFICATION = 0x30
 const val NOTIFICATION_REMOVED = 0x31
 const val CLIPBOARD = 0x32
 
 /** notify lane. While a session is up, services and activities reach it through [current]. */
-class NotifyFeature(private val context: Context, val send: Send) : Feature {
+class NotifyFeature(private val context: Context, private val send: Send) : Feature {
     private val echo = EchoGuard()
+    private val io = Executors.newSingleThreadExecutor()
+
+    /** Link writes the socket on the caller thread; callers here are often the main thread. */
+    fun post(type: Int, payload: ByteArray) = io.execute { send(type, payload) }
 
     override fun onConnected() { current = this }
 
@@ -35,7 +40,7 @@ class NotifyFeature(private val context: Context, val send: Send) : Feature {
     fun sendClipboard(focused: Context) {
         val text = focused.getSystemService(ClipboardManager::class.java)
             .primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(focused)?.toString() ?: return
-        if (echo.shouldSend(text)) send(CLIPBOARD, JSONObject().put("text", text).toString().toByteArray())
+        if (echo.shouldSend(text)) post(CLIPBOARD, JSONObject().put("text", text).toString().toByteArray())
     }
 
     companion object {
