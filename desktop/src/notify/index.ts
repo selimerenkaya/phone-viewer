@@ -12,23 +12,24 @@ const POLL_MS = 1000;
 export function createNotifyFeature(send: Send): Feature {
   const toasts = new Map<string, Notification>();
   const echo = new EchoGuard();
-  let primed = false;
+  let polling: NodeJS.Timeout | undefined;
   // One queue for clipboard reads and writes, so a poll never sees the value from before a write.
   let queue = Promise.resolve();
   const enqueue = (job: () => Promise<void>) => (queue = queue.then(job).catch(() => {}));
 
-  // Polls for the app's whole life; link's send drops frames while no session is up.
-  setInterval(() => enqueue(async () => {
-    const text = await clipboard.readText();
-    if (!primed) {
-      primed = true;
-      echo.received(text); // only send changes made after start-up
-    } else if (text && echo.shouldSend(text)) {
-      send(CLIPBOARD, new TextEncoder().encode(JSON.stringify({ text })));
-    }
-  }), POLL_MS).unref();
-
   return {
+    onConnected() {
+      let primed = false;
+      polling = setInterval(() => enqueue(async () => {
+        const text = await clipboard.readText();
+        if (!primed) {
+          primed = true;
+          echo.received(text); // only send changes made after connecting
+        } else if (text && echo.shouldSend(text)) {
+          send(CLIPBOARD, new TextEncoder().encode(JSON.stringify({ text })));
+        }
+      }), POLL_MS);
+    },
     onMessage(type, payload) {
       let msg: any;
       try {
@@ -55,6 +56,8 @@ export function createNotifyFeature(send: Send): Feature {
       }
     },
     onDisconnected() {
+      clearInterval(polling);
+      polling = undefined;
       toasts.clear(); // removals made while offline never arrive
     },
   };

@@ -8,11 +8,6 @@ import org.json.JSONObject
 
 /** notify lane: forwards posted/removed notifications to the PC while a session is active. */
 class NotificationListener : NotificationListenerService() {
-    override fun onCreate() {
-        super.onCreate()
-        NotifyFeature.app = applicationContext
-    }
-
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val feature = NotifyFeature.current ?: return
         if (!shouldForward(sbn.notification.flags, sbn.packageName, packageName)) return

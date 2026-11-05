@@ -14,35 +14,32 @@ const val NOTIFICATION = 0x30
 const val NOTIFICATION_REMOVED = 0x31
 const val CLIPBOARD = 0x32
 
-/** notify lane. Link builds one per PC session; services and activities reach it through [current]. */
-class NotifyFeature(val send: Send) : Feature {
+/** notify lane. While a session is up, services and activities reach it through [current]. */
+class NotifyFeature(private val context: Context, val send: Send) : Feature {
     private val echo = EchoGuard()
 
-    init { current = this }
+    override fun onConnected() { current = this }
+
+    override fun onDisconnected() { if (current === this) current = null }
 
     override fun onMessage(type: Int, payload: ByteArray) {
         if (type != CLIPBOARD) return
         val text = runCatching { JSONObject(String(payload)).getString("text") }.getOrNull() ?: return
-        val clipboard = app?.getSystemService(ClipboardManager::class.java) ?: return
         echo.received(text)
-        Handler(Looper.getMainLooper()).post { clipboard.setPrimaryClip(ClipData.newPlainText("PC", text)) }
+        Handler(Looper.getMainLooper()).post {
+            context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("PC", text))
+        }
     }
 
-    override fun onDisconnected() {
-        if (current === this) current = null
-    }
-
-    /** Sends the phone clipboard to the PC. Call only while [context] has window focus (Android 10+ rule). */
-    fun sendClipboard(context: Context) {
-        val text = context.getSystemService(ClipboardManager::class.java)
-            .primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString() ?: return
+    /** Sends the phone clipboard to the PC. Call only while [focused] has window focus (Android 10+ rule). */
+    fun sendClipboard(focused: Context) {
+        val text = focused.getSystemService(ClipboardManager::class.java)
+            .primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(focused)?.toString() ?: return
         if (echo.shouldSend(text)) send(CLIPBOARD, JSONObject().put("text", text).toString().toByteArray())
     }
 
     companion object {
         @Volatile var current: NotifyFeature? = null
-        // shortcut: set by MainActivity/NotificationListener; if link's service outlives both after a process restart, PC → phone clipboard is dropped until the app is opened.
-        @Volatile var app: Context? = null
     }
 }
 

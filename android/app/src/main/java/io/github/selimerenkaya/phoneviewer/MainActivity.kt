@@ -20,8 +20,7 @@ class MainActivity : Activity() {
             textSize = 20f
             setPadding(48, 96, 48, 48)
         })
-        // notify: clipboard needs a Context; button opens Notification access settings
-        NotifyFeature.app = applicationContext
+        // notify: opens Notification access settings
         addContentView(Button(this).apply {
             text = "Notification access"
             setOnClickListener { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
