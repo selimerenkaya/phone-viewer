@@ -6,11 +6,26 @@
   "scripts": {
     "build": "tsc",
     "start": "tsc && electron .",
-    "test": "tsc && node --test \"dist/**/*.test.js\""
+    "test": "tsc && node --test \"dist/**/*.test.js\"",
+    "dist": "tsc && electron-builder --win nsis"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
     "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
     "typescript": "^7.0.2"
+  },
+  "build": {
+    "appId": "io.github.selimerenkaya.phoneviewer",
+    "productName": "Phone Viewer",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "!dist/**/*.test.js",
+      "!dist/**/*.map",
+      "src/renderer/index.html"
+    ]
   }
 }

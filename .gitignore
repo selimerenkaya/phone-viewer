@@ -17,6 +17,7 @@ captures/
 node_modules/
 dist/
 out/
+release/
 
 # Secrets and pairing material
 *.pem
