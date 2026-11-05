@@ -9,6 +9,7 @@ Thumbs.db
 .gradle/
 build/
 local.properties
+keystore.properties
 *.keystore
 *.jks
 captures/
@@ -17,6 +18,7 @@ captures/
 node_modules/
 dist/
 out/
+release/
 
 # Secrets and pairing material
 *.pem
