@@ -1,7 +1,11 @@
 import { app, BrowserWindow } from "electron";
 import path from "node:path";
+import { clipboard, ipcMain } from "electron"; // notify
 
 app.setAppUserModelId("io.github.selimerenkaya.phoneviewer"); // required for Windows toasts
+// notify: Electron 45 exports `clipboard` only in the main process, so the preload reaches it here.
+ipcMain.handle("notify:clipboard-read", () => clipboard.readText());
+ipcMain.handle("notify:clipboard-write", (_e, text: unknown) => clipboard.writeText(String(text)));
 
 app.whenReady().then(() => {
   const win = new BrowserWindow({
