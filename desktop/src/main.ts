@@ -13,6 +13,7 @@ app.whenReady().then(() => {
       // Safe because the window only ever loads our local index.html.
       preload: path.join(__dirname, "renderer", "app.js"),
       sandbox: false,
+      additionalArguments: [`--user-data=${app.getPath("userData")}`], // link: where the preload keeps its cert and pins
     },
   });
   win.loadFile(path.join(__dirname, "..", "src", "renderer", "index.html"));
