@@ -31,6 +31,9 @@ export class FrameReader {
   }
 }
 
+/** Wait before reconnect attempt `n` (0-based): 1 s, 2 s, 4 s … capped at 30 s. */
+export const backoffMs = (n: number): number => Math.min(30_000, 1000 * 2 ** n);
+
 export const sha256 = (...parts: Uint8Array[]): Buffer => createHash("sha256").update(Buffer.concat(parts)).digest();
 
 /** 6-digit code both screens show: first 4 bytes of SHA-256(phoneFP ‖ pcFP ‖ phoneNonce ‖ pcNonce) as u32 BE, mod 1e6. */

@@ -6,6 +6,8 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.net.nsd.NsdManager
+import android.net.nsd.NsdServiceInfo
 import android.os.Build
 import android.os.IBinder
 import io.github.selimerenkaya.phoneviewer.control.ControlFeature
@@ -34,6 +36,12 @@ class LinkService : Service() {
     /** Output of the running session; null before pairing finishes and after disconnect. */
     @Volatile private var session: OutputStream? = null
     private var started = false
+    private val advertised = object : NsdManager.RegistrationListener {
+        override fun onServiceRegistered(info: NsdServiceInfo) {}
+        override fun onServiceUnregistered(info: NsdServiceInfo) {}
+        override fun onRegistrationFailed(info: NsdServiceInfo, error: Int) {} // the IP field on the PC still works
+        override fun onUnregistrationFailed(info: NsdServiceInfo, error: Int) {}
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         getSystemService(NotificationManager::class.java)
@@ -46,6 +54,9 @@ class LinkService : Service() {
         if (!started) {
             started = true
             thread(name = "link") { serve() }
+            // Lets the PC find us without typing an IP (desktop/src/link/discovery.ts). NsdManager re-announces on Wi-Fi changes.
+            val info = NsdServiceInfo().apply { serviceName = Build.MODEL; serviceType = "_phoneviewer._tcp"; port = PORT }
+            getSystemService(NsdManager::class.java).registerService(info, NsdManager.PROTOCOL_DNS_SD, advertised)
         }
         return START_STICKY
     }
