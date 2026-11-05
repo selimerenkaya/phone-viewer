@@ -1,5 +1,5 @@
 {
-  "note": "Generated once; both android/ and desktop/ unit tests must reproduce these exactly. Fingerprints are hex SHA-256 of DER cert bytes.",
+  "note": "Generated once; android/ and desktop/ unit tests must reproduce these exactly. All hex is lowercase. Fingerprints are SHA-256 of DER cert bytes; nonces are 32 random bytes; commit = SHA-256(pcNonce bytes).",
   "frames": [
     {
       "type": 4,
@@ -21,17 +21,36 @@
     {
       "phoneFingerprint": "c71b552c6f362f9da9861adf5681e2067ba37cb5ba1a5b64a987b2544dbff0c7",
       "pcFingerprint": "89c27d66b3dc0d10c859355e9ea56b2db771f3ca80685c286b663843e2c4d346",
-      "code": "673214"
+      "phoneNonce": "c2721976e0b6983e4996908f1de89618acefabac7e28721b0feaa1fc70069bf1",
+      "pcNonce": "07f2ac9859a2f367aff3c7462e6f2bc5539ef1912f89097d5e50cec6d26e7a35",
+      "commit": "bfe9d5c0670d2d589fd8173f1a4d471c91448f53893358e127cba3779f341c78",
+      "code": "153955"
     },
     {
       "phoneFingerprint": "343fa7ce8924453a9fafb0c8690975a0067d46549d6043f19166170644d7022b",
       "pcFingerprint": "234e116872f6412668d2c8a26cd732497d20609b6c056f61a714524eaa797baf",
-      "code": "252048"
+      "phoneNonce": "f44c650975b8aa9a7e8a1d23160ec7e36cceb914a995257b3194c6793dd390a5",
+      "pcNonce": "6f3844d0758b399b9a0d87886e6593e03591c5f36a9abcaecf31157582b92edf",
+      "commit": "c15c23a829137e4c0cb9a9b0b4af5442bdd42eacb5d3af4fda77a40aa53c2731",
+      "code": "629853"
     },
     {
       "phoneFingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
       "pcFingerprint": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "code": "422312"
+      "phoneNonce": "1111111111111111111111111111111111111111111111111111111111111111",
+      "pcNonce": "2222222222222222222222222222222222222222222222222222222222222222",
+      "commit": "9f72ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4",
+      "code": "902050"
+    }
+  ],
+  "codecStrings": [
+    {
+      "spsHex": "67640028ac2b402802dd00f1226a",
+      "codec": "avc1.640028"
+    },
+    {
+      "spsHex": "6742c01fda014016ec04",
+      "codec": "avc1.42c01f"
     }
   ]
 }

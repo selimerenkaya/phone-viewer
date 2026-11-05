@@ -38,7 +38,7 @@ Out of scope for v1: iPhone, internet/remote access (LAN only), audio, file tran
 ## Security (not optional, because the PC can *control* the phone)
 
 - Every connection is TLS. No plain-text mode.
-- First connection: both sides show a 6-digit code made from both certificate fingerprints. The user checks they match and taps **Allow** on the phone. After that, each side remembers (pins) the other's fingerprint.
+- First connection: both sides show a 6-digit code made from both certificate fingerprints and two random nonces, exchanged commit-first so a man in the middle can't steer the code. The user checks they match and taps **Allow** on the phone. After that, each side remembers (pins) the other's fingerprint. Details: [PROTOCOL.md](PROTOCOL.md#connecting-and-pairing).
 - An unpaired peer can send only `PAIR`. Everything else closes the connection.
 - The phone can revoke a paired PC at any time.
 
