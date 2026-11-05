@@ -85,6 +85,7 @@ class LinkService : Service() {
     }
 
     private fun handle(socket: SSLSocket) {
+        current = socket
         socket.soTimeout = 15_000 // the PC pings every 5 s once the session runs
         socket.startHandshake()
         val pcFp = sha256(socket.session.peerCertificates[0].encoded).toHexString()
@@ -160,6 +161,14 @@ class LinkService : Service() {
 
         /** The user tapped Allow (true) or Deny (false) for the pairing code on screen. */
         fun decide(allow: Boolean) { decisions.offer(allow) }
+
+        @Volatile private var current: SSLSocket? = null
+
+        /** Revoke every paired PC: clear the pins and drop the PC connected now, so it must pair again. */
+        fun forgetAll(context: android.content.Context) {
+            context.getSharedPreferences("link", android.content.Context.MODE_PRIVATE).edit().remove("pins").apply()
+            Thread { runCatching { current?.close() } }.start() // close() does TLS I/O; keep it off the main thread
+        }
 
         private fun setStatus(s: String) { status = s; onChange?.invoke() }
     }

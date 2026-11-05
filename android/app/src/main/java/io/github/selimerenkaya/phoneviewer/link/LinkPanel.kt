@@ -20,7 +20,7 @@ class LinkPanel(context: Context) : LinearLayout(context) {
 
     init {
         orientation = VERTICAL
-        setPadding(48, 260, 48, 48) // sits below MainActivity's title
+        setPadding(0, 24, 0, 24)
         listOf(address, status, code, buttons).forEach(::addView)
     }
 
