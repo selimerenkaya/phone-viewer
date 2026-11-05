@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Phone Viewer</string>
+    <string name="accessibility_description">Lets your paired PC tap, swipe and type on this phone. Only active while a paired PC is connected.</string>
+    <string name="clipboard_tile">Send clipboard to PC</string>
 </resources>
