@@ -1,6 +1,6 @@
 import type { Feature, Send } from "../feature";
 
-const TOUCH = 0x20, GLOBAL = 0x21, TEXT = 0x22, SCROLL = 0x23;
+const TOUCH = 0x20, GLOBAL = 0x21, TEXT = 0x22, SCROLL = 0x23, KEY = 0x24;
 const BURST_MS = 80; // typed characters / wheel ticks within this window go out as one frame
 
 type Rect = { left: number; top: number; width: number; height: number };
@@ -58,13 +58,16 @@ export function createControlFeature(sendRaw: Send): Feature {
       setTimeout(() => { send(SCROLL, json({ ...wheel!, dy: Math.max(-1, Math.min(1, wheel!.dy)) })); wheel = null; }, BURST_MS);
     }, { passive: false });
 
-    let text = "";
+    let text = "", flushTimer: ReturnType<typeof setTimeout> | undefined;
+    const flush = () => { clearTimeout(flushTimer); if (text) send(TEXT, json({ text })); text = ""; };
     window.addEventListener("keydown", (e) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === "Escape") return send(GLOBAL, json({ action: "back" }));
-      if (e.key.length !== 1 || e.ctrlKey || e.altKey || e.metaKey) return; // shortcut: no Enter/Backspace, TEXT can only insert
+      const key = e.key === "Backspace" ? "backspace" : e.key === "Enter" ? "enter" : null;
+      if (key) { e.preventDefault(); flush(); return send(KEY, json({ key })); } // flush first: keep typing order
+      if (e.key.length !== 1 || e.ctrlKey || e.altKey || e.metaKey) return;
       e.preventDefault();
-      if (!text) setTimeout(() => { send(TEXT, json({ text })); text = ""; }, BURST_MS);
+      if (!text) flushTimer = setTimeout(flush, BURST_MS);
       text += e.key;
     });
 

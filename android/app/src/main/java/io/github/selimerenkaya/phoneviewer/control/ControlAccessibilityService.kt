@@ -6,6 +6,7 @@ import android.accessibilityservice.GestureDescription.StrokeDescription
 import android.content.Intent
 import android.graphics.Path
 import android.hardware.display.DisplayManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -78,19 +79,31 @@ class ControlAccessibilityService : AccessibilityService() {
     }
 
     /** Insert [t] at the cursor of the focused editable field (end of text if no cursor). */
-    fun text(t: String) = main.post {
-        val node = rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.takeIf { it.isEditable } ?: return@post
+    fun text(t: String) = main.post { focusedField()?.let { edit(it, t, backspace = false) } }
+
+    /** "backspace" deletes the selection or the character before the cursor; "enter" presses the keyboard's action key. */
+    fun key(k: String) = main.post {
+        val node = focusedField() ?: return@post
+        when (k) {
+            "backspace" -> edit(node, "", backspace = true)
+            "enter" -> if (Build.VERSION.SDK_INT >= 30) node.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id)
+                       else edit(node, "\n", backspace = false) // Android 10 has no IME-enter action
+        }
+    }
+
+    private fun focusedField() = rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)?.takeIf { it.isEditable }
+
+    private fun edit(node: AccessibilityNodeInfo, insert: String, backspace: Boolean) {
         // shortcut: password fields report masked text, so typing there replaces it with dots; fine for v1
         val old = if (node.isShowingHintText) "" else node.text?.toString() ?: ""
-        val start = node.textSelectionStart.takeIf { it in 0..old.length } ?: old.length
-        val end = node.textSelectionEnd.coerceIn(start, old.length)
-        val args = Bundle()
-        args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, old.substring(0, start) + t + old.substring(end))
-        node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)
-        val cursor = Bundle()
-        cursor.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, start + t.length)
-        cursor.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, start + t.length)
-        node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, cursor)
+        val (text, cursor) = applyEdit(old, node.textSelectionStart, node.textSelectionEnd, insert, backspace)
+        node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, Bundle().apply {
+            putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
+        })
+        node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, Bundle().apply {
+            putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, cursor)
+            putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, cursor)
+        })
     }
 
     private fun enqueue(e: Ev) {
