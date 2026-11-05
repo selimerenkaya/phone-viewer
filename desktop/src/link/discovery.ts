@@ -1,6 +1,7 @@
 // Finds phones advertising SERVICE over mDNS (the phone registers it with Android NsdManager).
 // Hand-written on dgram: one PTR query, and we read only the PTR answers; the phone's address is the packet's source.
 import dgram from "node:dgram";
+import os from "node:os";
 
 export const SERVICE = "_phoneviewer._tcp.local";
 const GROUP = "224.0.0.251", PORT = 5353;
@@ -60,8 +61,20 @@ export function discover(found: (name: string, ip: string) => void): void {
   });
   sock.on("error", () => sock.close()); // shortcut: no discovery if port 5353 can't be shared; the IP field still works
   sock.bind(PORT, () => {
-    sock.addMembership(GROUP); // shortcut: default interface only; join every IPv4 interface if PCs with several NICs miss phones
-    const ask = () => sock.send(ptrQuery(SERVICE), PORT, GROUP);
+    // Ask on every IPv4 adapter: the default multicast one is often a VPN or Hyper-V adapter, not the Wi-Fi LAN.
+    const joined = new Set<string>();
+    const ask = (addrs = Object.values(os.networkInterfaces()).flat().filter((a) => a?.family === "IPv4" && !a.internal).map((a) => a!.address)) => {
+      const addr = addrs.shift();
+      if (!addr) return;
+      try {
+        if (!joined.has(addr)) sock.addMembership(GROUP, addr);
+        joined.add(addr);
+        sock.setMulticastInterface(addr);
+        sock.send(ptrQuery(SERVICE), PORT, GROUP, () => ask(addrs)); // one at a time, so each send leaves on its own adapter
+      } catch {
+        ask(addrs); // adapter went away or has no multicast
+      }
+    };
     ask();
     const timer = setInterval(ask, 5_000);
     sock.on("close", () => clearInterval(timer));
