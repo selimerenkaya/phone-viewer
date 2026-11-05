@@ -12,9 +12,10 @@ export function parseFrame(payload: Uint8Array) {
 }
 
 /** Video lane, PC side: WebCodecs decoder drawing onto `<canvas id="screen">`. */
-export function createVideoFeature(send: Send): Feature & { onConnected(): void } {
+export function createVideoFeature(send: Send): Feature {
   let decoder: VideoDecoder | undefined;
   let waitingForKey = true;
+  const stopOnClose = () => send(VIDEO_STOP, new Uint8Array(0));
 
   function configure(payload: Uint8Array) {
     const { codec, width, height } = JSON.parse(new TextDecoder().decode(payload));
@@ -34,10 +35,9 @@ export function createVideoFeature(send: Send): Feature & { onConnected(): void 
   }
 
   return {
-    /** Called once the session is up (after HELLO). */
     onConnected() {
       send(VIDEO_START, new TextEncoder().encode(JSON.stringify({ maxSize: 1920, bitrate: 8_000_000 })));
-      window.addEventListener("beforeunload", () => send(VIDEO_STOP, new Uint8Array(0)));
+      window.addEventListener("beforeunload", stopOnClose); // same function each time, so added once
     },
     onMessage(type, payload) {
       if (type === VIDEO_CONFIG) configure(payload);

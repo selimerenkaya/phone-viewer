@@ -44,7 +44,7 @@ class VideoFeatureTest {
     fun dropsNonKeyFramesWhenBackedUpUntilNextKeyFrame() {
         val gate = CountDownLatch(1)
         val sent = mutableListOf<Int>()
-        val f = VideoFeature { _, p -> gate.await(); synchronized(sent) { sent += p[0].toInt() } }
+        val f = FrameQueue { _, p -> gate.await(); synchronized(sent) { sent += p[0].toInt() } }
         val d = ByteArray(1)
         // the sender thread holds one frame (blocked on gate); three more fill the queue
         repeat(4) { assertFalse(f.sendFrame(false, 0, d)); Thread.sleep(20) }
@@ -55,6 +55,5 @@ class VideoFeatureTest {
         gate.countDown()
         Thread.sleep(200)
         assertEquals(listOf(0, 1, 0), synchronized(sent) { sent.toList() })
-        f.onDisconnected()
     }
 }

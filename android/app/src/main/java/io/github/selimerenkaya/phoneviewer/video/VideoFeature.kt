@@ -13,22 +13,15 @@ import java.nio.ByteBuffer
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
 
-/** Video lane, phone side: protocol handling and the send queue. Encoding lives in [ScreenCaptureService]. */
-class VideoFeature(private val send: Send) : Feature {
+/** Video lane, phone side: protocol handling. Encoding lives in [ScreenCaptureService]. Link makes one per process. */
+class VideoFeature(private val context: Context, send: Send) : Feature {
     class Params(val maxSize: Int, val bitrate: Int)
 
     /** What the PC asked for; null while the PC doesn't want video. */
     @Volatile var params: Params? = null
         private set
 
-    private val out = LinkedBlockingQueue<Pair<Int, ByteArray>>()
-    @Volatile private var skipping = false
-    private val sender = thread(isDaemon = true, name = "video-send") {
-        try {
-            while (true) out.take().let { (type, payload) -> send(type, payload) }
-        } catch (_: InterruptedException) {
-        }
-    }
+    val queue = FrameQueue(send)
 
     init {
         current = this
@@ -43,44 +36,25 @@ class VideoFeature(private val send: Send) : Feature {
                 val service = ScreenCaptureService.running
                 if (service != null) service.startStream(p) else askConsent()
             }
-            VIDEO_STOP -> {
-                params = null
-                ScreenCaptureService.running?.stopStream()
-                out.clear()
-            }
+            VIDEO_STOP -> stop()
         }
     }
 
     override fun onDisconnected() {
-        params = null
+        stop()
         ScreenCaptureService.running?.stopSelf()
-        context?.getSystemService(NotificationManager::class.java)?.cancel(CONSENT_NOTIFICATION)
-        sender.interrupt()
-        if (current === this) current = null
+        context.getSystemService(NotificationManager::class.java).cancel(CONSENT_NOTIFICATION)
     }
 
-    fun sendConfig(codec: String, width: Int, height: Int) {
-        out.put(VIDEO_CONFIG to JSONObject().put("codec", codec).put("width", width).put("height", height).toString().toByteArray())
-    }
-
-    /** Queues a frame, or drops it if the link is backed up. Returns true when the caller should request a key frame. */
-    fun sendFrame(key: Boolean, timestampUs: Long, data: ByteArray): Boolean {
-        val backedUp = out.size >= MAX_QUEUED
-        if (key) {
-            skipping = false
-            if (backedUp) out.removeIf { it.first == VIDEO_FRAME } // stale frames; this key frame replaces them
-        } else if (skipping || backedUp) {
-            val wasSkipping = skipping
-            skipping = true // P-frames after a dropped one can't decode until the next key frame
-            return !wasSkipping
-        }
-        out.put(VIDEO_FRAME to frame(key, timestampUs, data))
-        return false
+    private fun stop() {
+        params = null
+        ScreenCaptureService.running?.stopStream()
+        queue.clear()
     }
 
     /** A background service can't open the consent dialog, so try directly (works if the app is visible) and post a notification. */
     private fun askConsent() {
-        val ctx = context ?: return
+        val ctx = context
         val intent = Intent(ctx, ScreenConsentActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         ctx.startActivity(intent)
         val nm = ctx.getSystemService(NotificationManager::class.java)
@@ -101,10 +75,6 @@ class VideoFeature(private val send: Send) : Feature {
         const val VIDEO_STOP = 0x13
         const val CHANNEL = "video"
         const val CONSENT_NOTIFICATION = 0x10
-        private const val MAX_QUEUED = 3
-
-        /** Set by the link lane (application context) before frames are routed here. */
-        @Volatile var context: Context? = null
         /** The live feature, so the capture service can reach it. */
         @Volatile var current: VideoFeature? = null
 
@@ -131,5 +101,43 @@ class VideoFeature(private val send: Send) : Feature {
             val s = minOf(1.0, maxSize.toDouble() / maxOf(w, h))
             return ((w * s).toInt() and 7.inv()) to ((h * s).toInt() and 7.inv())
         }
+    }
+}
+
+/** Hands frames to link on its own thread so a slow link never stalls the encoder; drops frames instead of building latency. */
+class FrameQueue(private val send: Send) {
+    private val out = LinkedBlockingQueue<Pair<Int, ByteArray>>()
+    @Volatile private var skipping = false
+
+    init {
+        thread(isDaemon = true, name = "video-send") {
+            while (true) out.take().let { (type, payload) -> runCatching { send(type, payload) } }
+        }
+    }
+
+    fun clear() = out.clear()
+
+    fun sendConfig(codec: String, width: Int, height: Int) {
+        val json = JSONObject().put("codec", codec).put("width", width).put("height", height)
+        out.put(VideoFeature.VIDEO_CONFIG to json.toString().toByteArray())
+    }
+
+    /** Queues a frame, or drops it if the link is backed up. Returns true when the caller should request a key frame. */
+    fun sendFrame(key: Boolean, timestampUs: Long, data: ByteArray): Boolean {
+        val backedUp = out.size >= MAX_QUEUED
+        if (key) {
+            skipping = false
+            if (backedUp) out.removeIf { it.first == VideoFeature.VIDEO_FRAME } // stale frames; this key frame replaces them
+        } else if (skipping || backedUp) {
+            val wasSkipping = skipping
+            skipping = true // P-frames after a dropped one can't decode until the next key frame
+            return !wasSkipping
+        }
+        out.put(VideoFeature.VIDEO_FRAME to VideoFeature.frame(key, timestampUs, data))
+        return false
+    }
+
+    private companion object {
+        const val MAX_QUEUED = 3
     }
 }

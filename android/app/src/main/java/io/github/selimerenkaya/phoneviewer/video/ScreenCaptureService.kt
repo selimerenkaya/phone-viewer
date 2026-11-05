@@ -121,13 +121,13 @@ class ScreenCaptureService : Service() {
             val data = ByteArray(info.size)
             c.getOutputBuffer(i)!!.apply { position(info.offset) }.get(data)
             c.releaseOutputBuffer(i, false)
-            val feature = VideoFeature.current ?: continue
+            val queue = VideoFeature.current?.queue ?: continue
             if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) {
                 csd = data
-                feature.sendConfig(VideoFeature.codecString(VideoFeature.findSps(data)!!), w, h)
+                queue.sendConfig(VideoFeature.codecString(VideoFeature.findSps(data)!!), w, h)
             } else {
                 val key = info.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME != 0
-                if (feature.sendFrame(key, info.presentationTimeUs, if (key) csd + data else data)) {
+                if (queue.sendFrame(key, info.presentationTimeUs, if (key) csd + data else data)) {
                     c.setParameters(Bundle().apply { putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0) })
                 }
             }
