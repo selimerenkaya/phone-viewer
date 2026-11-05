@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'" />
+    <title>Phone Viewer</title>
+    <style>
+      body { margin: 0; background: #111; color: #ddd; font: 14px system-ui, sans-serif; }
+      #status { padding: 8px 12px; }
+      #screen { display: block; max-width: 100%; max-height: calc(100vh - 40px); margin: 0 auto; }
+    </style>
+  </head>
+  <body>
+    <div id="status">Not connected</div>
+    <canvas id="screen"></canvas>
+  </body>
+</html>
