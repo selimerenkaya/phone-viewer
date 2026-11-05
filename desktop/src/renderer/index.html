@@ -5,15 +5,74 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
     <title>Phone Viewer</title>
     <style>
-      body { margin: 0; background: #111; color: #ddd; font: 14px system-ui, sans-serif; }
-      #status { padding: 8px 12px; }
-      #link { padding: 8px 12px 0; }
-      #screen { display: block; max-width: 100%; max-height: calc(100vh - 40px); margin: 0 auto; }
+      :root { --bg: #111418; --panel: #1b2027; --line: #2b323c; --text: #e6e9ee; --muted: #9aa3ae; --accent: #4c8dff; }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body { margin: 0; display: flex; flex-direction: column; background: var(--bg); color: var(--text); font: 14px "Segoe UI", system-ui, sans-serif; }
+      button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+      button:hover { border-color: var(--accent); }
+      button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      input { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+
+      header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+      #dot { width: 10px; height: 10px; border-radius: 50%; background: #6b7280; flex: none; }
+      [data-state="connecting"] #dot, [data-state="pairing"] #dot { background: #f5b301; }
+      [data-state="connected"] #dot { background: #22c55e; }
+      #status { flex: 1; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #disconnect { padding: 4px 10px; }
+
+      main { flex: 1; min-height: 0; display: flex; }
+      .panel { margin: auto; width: min(420px, 100% - 32px); text-align: center; }
+      .panel h1 { font-size: 20px; font-weight: 600; margin: 0 0 8px; }
+      .hint { color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+      #phones { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+      #phones:empty::before { content: "Looking for phones on your Wi-Fi…"; color: var(--muted); padding: 16px; border: 1px dashed var(--line); border-radius: 8px; }
+      #phones button { display: flex; justify-content: space-between; padding: 14px 16px; text-align: left; }
+      #phones small { color: var(--muted); }
+      details { color: var(--muted); }
+      details form { display: flex; gap: 8px; margin-top: 8px; }
+      details input { flex: 1; }
+      #code { font: 600 44px/1.2 Consolas, monospace; letter-spacing: 6px; margin: 8px 0 16px; color: var(--text); }
+
+      #stage { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; position: relative; padding: 8px; }
+      #screen { max-width: 100%; max-height: 100%; border-radius: 12px; cursor: pointer; }
+      #waiting { position: absolute; max-width: 320px; text-align: center; color: var(--muted); line-height: 1.5; }
+      [data-video="on"] #waiting { display: none; }
+      body:not([data-video="on"]) #screen { visibility: hidden; }
+
+      nav { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+      nav .hint { margin: 0 0 0 auto; font-size: 12px; }
+
+      /* Each state shows only its own parts. */
+      body:not([data-state="idle"]):not([data-state="connecting"]) #connect-panel,
+      body:not([data-state="pairing"]) #pair-panel,
+      body:not([data-state="connected"]) #stage,
+      body:not([data-state="connected"]) nav,
+      [data-state="idle"] #disconnect { display: none; }
     </style>
   </head>
-  <body>
-    <div id="link"><input id="ip" placeholder="Phone IP, e.g. 192.168.1.20" /> <button id="connect">Connect</button></div>
-    <div id="status">Not connected</div>
-    <canvas id="screen"></canvas>
+  <body data-state="idle">
+    <header><span id="dot"></span><span id="status" role="status">Not connected</span><button id="disconnect">Disconnect</button></header>
+    <main>
+      <section id="connect-panel" class="panel">
+        <h1>Connect to your phone</h1>
+        <p class="hint">Open Phone Viewer on your phone. The phone and this PC must be on the same Wi-Fi.</p>
+        <div id="phones"></div>
+        <details>
+          <summary>Phone not listed? Enter its IP address</summary>
+          <form id="manual"><input id="ip" placeholder="e.g. 192.168.1.20" aria-label="Phone IP address" /><button id="connect">Connect</button></form>
+        </details>
+      </section>
+      <section id="pair-panel" class="panel">
+        <h1>Pair with your phone</h1>
+        <div id="code" aria-label="Pairing code"></div>
+        <p class="hint">Check that your phone shows the same code, then tap <b>Allow</b> on the phone.</p>
+      </section>
+      <div id="stage">
+        <canvas id="screen" aria-label="Phone screen"></canvas>
+        <p id="waiting">Waiting for the phone's screen…<br />On your phone, tap <b>Start now</b> to share it.</p>
+      </div>
+    </main>
+    <nav id="nav"><span class="hint">Click = tap · drag = swipe · wheel = scroll · type to enter text · Esc = Back</span></nav>
   </body>
 </html>

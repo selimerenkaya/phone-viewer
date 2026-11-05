@@ -71,16 +71,13 @@ export function createControlFeature(sendRaw: Send): Feature {
       text += e.key;
     });
 
-    const bar = document.createElement("div");
-    bar.style.cssText = "position:fixed;right:8px;bottom:8px;display:flex;gap:4px";
-    for (const [label, action] of [["◀", "back"], ["●", "home"], ["■", "recents"], ["▼", "notifications"]]) {
+    const bar = document.getElementById("nav")!; // the UI shell's bottom bar
+    for (const [label, action] of [["◀ Back", "back"], ["● Home", "home"], ["▢ Recents", "recents"], ["▼ Notifications", "notifications"]]) {
       const b = document.createElement("button");
       b.textContent = label;
-      b.title = action;
       b.onclick = () => { b.blur(); send(GLOBAL, json({ action })); }; // blur: Space must type, not re-click
-      bar.append(b);
+      bar.insertBefore(b, bar.lastElementChild); // before the shortcut hint
     }
-    document.body.append(bar);
   }
 
   return {

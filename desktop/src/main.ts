@@ -11,7 +11,11 @@ app.whenReady().then(() => {
   const win = new BrowserWindow({
     width: 480,
     height: 900,
+    minWidth: 360,
+    minHeight: 480,
     title: "Phone Viewer",
+    backgroundColor: "#111418", // no white flash before the page paints
+    autoHideMenuBar: true,
     webPreferences: {
       // The whole app runs in the preload: it needs Node (tls) and the DOM (WebCodecs, canvas).
       // Safe because the window only ever loads our local index.html.

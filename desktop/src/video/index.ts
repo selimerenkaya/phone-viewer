@@ -25,8 +25,14 @@ export function createVideoFeature(send: Send): Feature {
     if (!decoder || decoder.state === "closed") {
       const ctx = canvas.getContext("2d")!;
       decoder = new VideoDecoder({
-        output: (frame) => { ctx.drawImage(frame, 0, 0, canvas.width, canvas.height); frame.close(); },
-        error: (e) => console.error("video decoder:", e), // closes the decoder; the next VIDEO_CONFIG makes a new one
+        output: (frame) => {
+          ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+          frame.close();
+          document.body.dataset.video = "on"; // the UI shell hides its "waiting for the screen" hint
+        },
+        // The error closes the decoder. Restarting the stream makes the phone send a fresh VIDEO_CONFIG + key frame;
+        // the 1 s delay keeps a decoder that always fails from spinning.
+        error: (e) => { console.error("video decoder:", e); setTimeout(restart, 1000); },
       });
     }
     // No `description`: input is Annex B with SPS/PPS in front of every key frame.
@@ -34,9 +40,12 @@ export function createVideoFeature(send: Send): Feature {
     waitingForKey = true;
   }
 
+  const start = () => send(VIDEO_START, new TextEncoder().encode(JSON.stringify({ maxSize: 1920, bitrate: 8_000_000 })));
+  const restart = () => { stopOnClose(); start(); }; // the phone keeps its screen-share consent across STOP/START
+
   return {
     onConnected() {
-      send(VIDEO_START, new TextEncoder().encode(JSON.stringify({ maxSize: 1920, bitrate: 8_000_000 })));
+      start();
       window.addEventListener("beforeunload", stopOnClose); // same function each time, so added once
     },
     onMessage(type, payload) {
@@ -50,6 +59,7 @@ export function createVideoFeature(send: Send): Feature {
     onDisconnected() {
       if (decoder && decoder.state !== "closed") decoder.close();
       decoder = undefined;
+      delete document.body.dataset.video;
     },
   };
 }
