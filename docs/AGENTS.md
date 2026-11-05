@@ -29,22 +29,13 @@ A lane that truly needs a change here (a new dependency, a new permission) **add
 
 ## Contract between lanes
 
-In M0 the lead creates one stub per lane with a fixed shape. Lanes fill in the body, not the signature:
+The contract is the `Feature` interface plus a `Send` function. Both are lead-owned:
+- Android: `android/…/Feature.kt`. Each lane has `class VideoFeature(send: Send) : Feature` (likewise `ControlFeature`, `NotifyFeature`).
+- Desktop: `desktop/src/feature.ts`. Each lane has `createVideoFeature(send: Send): Feature` in `desktop/src/<lane>/index.ts`.
 
-```kotlin
-// android/…/video/VideoFeature.kt (same for control/, notify/)
-class VideoFeature(private val send: (type: Int, payload: ByteArray) -> Unit) {
-    fun onMessage(type: Int, payload: ByteArray) { /* lane fills in */ }
-    fun onDisconnected() {}
-}
-```
+Lanes fill in the body and keep the signature. `desktop/src/feature.test.ts` fails if a lane breaks the shape.
 
-```ts
-// desktop/src/video/index.ts (same for control/, notify/)
-export function createVideoFeature(send: (type: number, payload: Uint8Array) => void) {
-  return { onMessage(type: number, payload: Uint8Array) {}, onDisconnected() {} };
-}
-```
+On the desktop, the whole app runs in the window's preload script (`desktop/src/renderer/app.ts`), so every lane can use both Node (`tls`, Electron `clipboard`) and the DOM (`VideoDecoder`, canvas, `Notification`). There is no IPC.
 
 The `link` lane routes each incoming frame to the feature that owns its type range (see PROTOCOL.md). Lanes talk to each other **only** through the protocol. They never import each other's code.
 

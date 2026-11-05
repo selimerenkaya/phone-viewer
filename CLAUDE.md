@@ -6,5 +6,5 @@ Android phone ↔ Windows PC over LAN: screen view, remote control, notification
 2. **The protocol is the contract.** Never change `docs/PROTOCOL.md` or the frame format on your own. If you need a change, stop and ask the user/lead.
 3. **Never weaken security.** Always TLS, always pairing, no debug bypass, no plain-text fallback. The PC can control the phone.
 4. **Test against the shared vectors.** Framing and pairing-code tests must use `docs/protocol-vectors.json`.
-5. **Commands:** `android/` → `./gradlew assembleDebug test`. `desktop/` → `npm install && npm test && npm start`. Android SDK: `C:\Android\Sdk`. JDK 17.
+5. **Commands:** `android/` → `./gradlew assembleDebug test`. `desktop/` → `npm install && npm test && npm start`. JDK 17. If `npm start` says Electron failed to install, run `node node_modules/electron/install.js` (on this machine npm skipped Electron's download step).
 6. **Finish:** merge `origin/main`, push your branch, open a PR to `main`. Never push to `main` from a lane.
