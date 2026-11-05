@@ -46,7 +46,8 @@ export function createNotifyFeature(send: Send): Feature {
       } else if (type === NOTIFICATION && typeof msg.id === "string") {
         toasts.get(msg.id)?.close();
         const title = [msg.app, msg.title].filter(Boolean).join(" · ");
-        const toast = new Notification(title, { body: String(msg.text ?? ""), tag: msg.id });
+        // No tag: Windows closes by tag asynchronously, so closing the old toast could also take out this one.
+        const toast = new Notification(title, { body: String(msg.text ?? "") });
         toast.onclose = () => toasts.get(msg.id) === toast && toasts.delete(msg.id);
         toasts.set(msg.id, toast);
         if (toasts.size > MAX_TOASTS) toasts.delete(toasts.keys().next().value!);
