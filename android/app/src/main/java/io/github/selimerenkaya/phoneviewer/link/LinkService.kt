@@ -26,7 +26,9 @@ import kotlin.concurrent.thread
 class LinkService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private val features by lazy { listOf(VideoFeature(::send), ControlFeature(::send), NotifyFeature(::send)) } // 0x10, 0x20, 0x30
+    private val features by lazy {
+        listOf(VideoFeature(applicationContext, ::send), ControlFeature(applicationContext, ::send), NotifyFeature(applicationContext, ::send))
+    } // 0x10, 0x20, 0x30
     private val pins by lazy { getSharedPreferences("link", MODE_PRIVATE) }
 
     /** Output of the running session; null before pairing finishes and after disconnect. */
@@ -103,6 +105,7 @@ class LinkService : Service() {
         check(type == HELLO && trusted)
 
         session = out
+        features.forEach { it.onConnected() }
         setStatus("Connected to ${JSONObject(String(payload)).optString("name", "PC")}")
         thread(isDaemon = true, name = "link-ping") {
             while (session === out) {

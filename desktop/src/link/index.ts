@@ -71,6 +71,7 @@ export function startLink(features: { video: Feature; control: Feature; notify: 
       write(HELLO, { version: VERSION, name: os.hostname() });
       state = "session";
       session = s;
+      for (const f of routes) f.onConnected();
       status.textContent = `Connected to ${phoneName}`;
       keepalive = setInterval(() => (Date.now() - lastRx > 15_000 ? fail("Phone stopped responding") : write(PING)), 5_000);
     };
