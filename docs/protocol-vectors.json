@@ -1,0 +1,37 @@
+{
+  "note": "Generated once; both android/ and desktop/ unit tests must reproduce these exactly. Fingerprints are hex SHA-256 of DER cert bytes.",
+  "frames": [
+    {
+      "type": 4,
+      "payloadHex": "",
+      "frameHex": "0400000000"
+    },
+    {
+      "type": 1,
+      "payloadUtf8": "{\"version\":1,\"name\":\"Pixel 8\"}",
+      "frameHex": "010000001e7b2276657273696f6e223a312c226e616d65223a22506978656c2038227d"
+    },
+    {
+      "type": 50,
+      "payloadUtf8": "{\"text\":\"merhaba ğüşİ\"}",
+      "frameHex": "320000001b7b2274657874223a226d65726861626120c49fc3bcc59fc4b0227d"
+    }
+  ],
+  "pairingCodes": [
+    {
+      "phoneFingerprint": "c71b552c6f362f9da9861adf5681e2067ba37cb5ba1a5b64a987b2544dbff0c7",
+      "pcFingerprint": "89c27d66b3dc0d10c859355e9ea56b2db771f3ca80685c286b663843e2c4d346",
+      "code": "673214"
+    },
+    {
+      "phoneFingerprint": "343fa7ce8924453a9fafb0c8690975a0067d46549d6043f19166170644d7022b",
+      "pcFingerprint": "234e116872f6412668d2c8a26cd732497d20609b6c056f61a714524eaa797baf",
+      "code": "252048"
+    },
+    {
+      "phoneFingerprint": "0000000000000000000000000000000000000000000000000000000000000000",
+      "pcFingerprint": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "code": "422312"
+    }
+  ]
+}
