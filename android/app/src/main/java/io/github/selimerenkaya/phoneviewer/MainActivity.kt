@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -30,7 +31,6 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(48, 120, 48, 48)
             addView(TextView(context).apply { text = getString(R.string.app_name); textSize = 24f })
             addView(LinkPanel(context)) // link: IP, status, pairing code with Allow/Deny
             control = button(getString(R.string.enable_remote_control)) {
@@ -46,6 +46,13 @@ class MainActivity : Activity() {
                     .setNegativeButton(android.R.string.cancel, null)
                     .show()
             }
+        }
+        // Android 15+ draws the app under the status and navigation bars; keep the column clear of them.
+        column.setOnApplyWindowInsetsListener { v, insets ->
+            val bars = if (Build.VERSION.SDK_INT >= 30) insets.getInsets(WindowInsets.Type.systemBars())
+                       else @Suppress("DEPRECATION") insets.systemWindowInsets
+            v.setPadding(48, bars.top + 48, 48, bars.bottom + 48)
+            insets
         }
         setContentView(ScrollView(this).apply { addView(column) })
         startForegroundService(Intent(this, LinkService::class.java)) // link: listen for the PC
