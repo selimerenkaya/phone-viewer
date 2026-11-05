@@ -30,8 +30,9 @@ A lane that truly needs a change here (a new dependency, a new permission) **add
 ## Contract between lanes
 
 The contract is the `Feature` interface plus a `Send` function. Both are lead-owned:
-- Android: `android/…/Feature.kt`. Each lane has `class VideoFeature(send: Send) : Feature` (likewise `ControlFeature`, `NotifyFeature`).
+- Android: `android/…/Feature.kt`. Each lane has `class VideoFeature(context: Context, send: Send) : Feature` (likewise `ControlFeature`, `NotifyFeature`). Link constructs each one once, passing `applicationContext`.
 - Desktop: `desktop/src/feature.ts`. Each lane has `createVideoFeature(send: Send): Feature` in `desktop/src/<lane>/index.ts`.
+- Lifecycle, called by link on both sides: `onConnected()` once the session starts (`send` works from then on), `onMessage()` for each frame in the lane's type range, `onDisconnected()` when the connection drops.
 
 Lanes fill in the body and keep the signature. `desktop/src/feature.test.ts` fails if a lane breaks the shape.
 
